@@ -2,6 +2,59 @@
 
 Author: Yuanxu Wu
 
+# Description
+
+Implement the Davis-Putnam algorithm and use it to solve versions of the peg game.  
+
+The peg game is a well-known puzzle. You have a board with holes in a geometric pattern and a collection of pegs. Initially, there are pegs in all but one of the holes. The rule is that if there are three holes, A, B, C in a row, C is empty, and there are pegs in A and B, then you can jump the peg in A over B to C, and take out the peg in B. The puzzle is to find a way of carrying out jumps so that there is one peg left on the board.  
+
+## Three part of this program.
+
+1. An implementation of the Davis-Putnam procedure, which takes as input a set of clauses and outputs either a satisfying valuation, or a statement that the clauses cannot be satisfied.  
+2. A front end, which takes as input a geometric layout of a board and a starting state and outputs a set of clauses that can be input to (1).  
+3. A back end, which takes as input the output of (1) and translates it into a solution to the original problem.  
+
+## Compiling the peg puzzle to propositional logic
+
+The peg game can be expressed propositionally as follows: There are two kinds of atoms:  
+
+	Peg(H,I) means that hole H has a peg in it at time I. For instance Peg(5,2) means that hole 5 has a peg at time 2. (Note: in propositional logic, a construction like "Peg(5,2)" is considered a single symbol of 7 characters. The parentheses and comma are not punctuation, they are just characters in the symbol, to make it easier for the human reader.) 
+	
+	Jump(A,B,C,I) means that at time I, the peg in A is jumped to C over B.  
+	
+The number of time points is necessarily equal to the number of holes minus one, since you start with one hole and end with one peg. Let N be the number of holes. Then for each hole H and I=1..N-1 there should be an atom Peg(H,I) and for each triple of holes in a row A,B,C and I=1..N-2 there should be an atom Jump(A,B,C,I).
+
+## Propositional Encoding 
+There are eight or nine kinds of propositions.  
+
+1. Precondition axioms. If, at time I, you jump a peg from A to C over B, then A and B must have pegs at time I and C must not have a peg at time I.
+	For instance, with the above puzzle,   
+	Jump(8,5,3,4) => Peg(8,4) ^ Peg(5,4) ^ ~Peg(3,4) . 
+
+2. Causal axioms. If you jump from A to C over B at time I, then, at time I+1, A and B are empty and C has a peg.  
+For instance, Jump(8,5,3,4) => ~Peg(8,5) ^ ~Peg(5,5) ^ Peg(3,5) . 
+
+3. Frame axioms. (Frame axioms assert that state can change only if a relevant action occurs.)  
+  A. If Peg(H,I) and ~Peg(H,I+1) then either Jump(X,H,Y) or Jump(H,X,Y) for some holes X and Y.   
+	For instance, Peg(6,4) ^ ~Peg(6,5) => Jump(10,6,3,4) V Jump(3,6,10,4) V Jump(6,3,1,4) V Jump(6,5,4,4).  
+  B. If ~Peg(H,I) and Peg(H,I+1) then Jump(X,Y,H) for some holes X and Y.   
+	For instance ~Peg(6,4) ^ Peg(6,5) => Jump(1,3,6,4) V Jump(4,5,6,4).  
+
+4. One action at a time  
+  A. No two actions can be executed at the same time.   
+	For instance ~(Jump(1,2,4,4) ^ Jump(10,6,3,4))  
+  B. (Optional) At least one action is executed at each step.   
+	For instance Jump(1,2,4,4) V Jump(4,2,1,4) V ... V Jump(10,9,8,4) (going through all 18 possible jumps).   
+	(Adding additional constraints that you know are valid never costs much in performance, unless you add an enormous 	   number, and can hugely improve performance, depending on the specifics.)  
+
+5. Starting state . Specify the truth value of Peg(H,1) for each hole H.  
+
+6. Ending state: Exactly one peg remains. This involves two kinds of axioms.  
+  A. At least one peg remains at time N-1. Peg(1,N-1) V Peg(2,N-1) V ... V Peg(N,N-1).  
+  B. No two holes have a peg. For each pair of holes H,J, assert that ~(Peg(H,N-1) ^ Peg(J,N-1).  
+
+# How to run this program
+
 # Prerequisites
 1. Java 1.8.0
 
